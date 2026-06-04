@@ -12,8 +12,8 @@ from dataset import ManipDensityDataset, collate_keep_boxes
 from manip_density_detect import UNetDensity
 from train_utils import compute_loss, eval_loader
 
-def build_or_load_fixed_splits(data_dir, img_dir, val_ratio=0.10, test_ratio=0.05):
-    split_json = os.path.join(data_dir, "split_fixed_density.json")
+def build_or_load_fixed_splits(data_dir, img_dir, save_dir, val_ratio=0.10, test_ratio=0.05):
+    split_json = os.path.join(save_dir, "split_fixed_density.json")
     
     def list_ids():
         imgs = sorted(glob(os.path.join(img_dir, "*.png")))
@@ -40,7 +40,7 @@ def build_or_load_fixed_splits(data_dir, img_dir, val_ratio=0.10, test_ratio=0.0
     val  = ids_shuf[n_test:n_test+n_val]
     train = ids_shuf[n_test+n_val:]
     
-    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(save_dir, exist_ok=True)
     with open(split_json, "w", encoding="utf-8") as f:
         json.dump({"val": val, "test": test, "created_at": time.strftime("%F %T")}, f, indent=2)
     return train, val, test
@@ -60,7 +60,7 @@ def main():
     lbl_dir = os.path.join(args.data_dir, "labels")
 
     print(f"Loading data from {args.data_dir}...")
-    train_ids, val_ids, test_ids = build_or_load_fixed_splits(args.data_dir, img_dir)
+    train_ids, val_ids, test_ids = build_or_load_fixed_splits(args.data_dir, img_dir, args.save_dir)
     print(f"Splits: Train {len(train_ids)} | Val {len(val_ids)} | Test {len(test_ids)}")
 
     train_ds = ManipDensityDataset(train_ids, img_dir, den_dir, msk_dir, lbl_dir, augment=True)
