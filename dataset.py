@@ -83,6 +83,25 @@ class ManipDensityDataset(Dataset):
             if random.random() < 0.3:
                 img_t = TF.vflip(img_t); den_t = TF.vflip(den_t); msk_t = TF.vflip(msk_t)
                 boxes = [(x1, IMG_SIZE-y2, x2, IMG_SIZE-y1) for (x1,y1,x2,y2) in boxes]
+                
+            # Class Imbalance Handling: Apply heavier augmentation to REAL images
+            # A real image has absolutely no fake mask (max == 0)
+            is_real = (msk_t.max() == 0)
+            if is_real:
+                # Random brightness adjustment
+                if random.random() < 0.5:
+                    brightness_factor = random.uniform(0.7, 1.3)
+                    img_t = TF.adjust_brightness(img_t, brightness_factor)
+                
+                # Random contrast adjustment
+                if random.random() < 0.5:
+                    contrast_factor = random.uniform(0.7, 1.3)
+                    img_t = TF.adjust_contrast(img_t, contrast_factor)
+                    
+                # Add random Gaussian noise
+                if random.random() < 0.3:
+                    noise = torch.randn_like(img_t) * 0.05
+                    img_t = torch.clamp(img_t + noise, 0.0, 1.0)
 
         return {"id": sid, "img": img_t, "den": den_t, "msk": msk_t, "boxes": boxes}
 
