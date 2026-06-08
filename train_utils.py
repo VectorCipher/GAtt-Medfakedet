@@ -43,7 +43,7 @@ def eval_loader(model, loader, device, thr=0.5, min_area=20, iou_thr=0.5):
 
             for i in range(pd.shape[0]):
                 d = pd[i,0]
-                d01 = d / (d.max() + 1e-8)
+                d01 = d
 
                 pred_boxes = density_to_boxes(d01, thr=thr, min_area=min_area)
                 gt_boxes = gt_boxes_list[i]
