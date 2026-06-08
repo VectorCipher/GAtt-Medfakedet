@@ -11,6 +11,7 @@ from glob import glob
 from dataset import ManipDensityDataset, collate_keep_boxes
 from manip_density_detect import UNetDensity
 from train_utils import compute_loss, eval_loader
+from transunet_density import TransUNetDensity
 
 def build_or_load_fixed_splits(data_dir, img_dir, save_dir, val_ratio=0.10, test_ratio=0.05):
     split_json = os.path.join(save_dir, "split_fixed_density.json")
@@ -74,7 +75,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Using device:", device)
 
-    model = UNetDensity().to(device)
+    model = TransUNetDensity().to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
 
     THR = 0.28
@@ -114,7 +115,7 @@ def main():
         # Save Best Model
         if f1 > best_f1:
             best_f1 = f1
-            save_path = os.path.join(args.save_dir, 'density_region_detector_attention_best.pth')
+            save_path = os.path.join(args.save_dir, 'density_region_detector_transunet_best.pth')
             torch.save(model.state_dict(), save_path)
             print(f"--> Saved new best model to {save_path} (F1: {best_f1:.4f})")
             
