@@ -17,8 +17,14 @@ class ConvBlock(nn.Module):
         return self.net(x)
 
 class ViTBlock(nn.Module):
-    def __init__(self, embed_dim, num_heads, num_layers):
+    def __init__(self, embed_dim, num_heads, num_layers, spatial_size=32):
         super().__init__()
+        self.spatial_size = spatial_size
+        num_patches = spatial_size * spatial_size
+        
+        # Trainable Positional Embedding
+        self.pos_embed = nn.Parameter(torch.randn(1, num_patches, embed_dim) * 0.02)
+        
         # Using batch_first=True so input shape is [B, SeqLen, EmbedDim]
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=embed_dim, 
@@ -34,6 +40,9 @@ class ViTBlock(nn.Module):
         B, C, H, W = x.shape
         # Flatten spatial dimensions into a sequence
         x = x.flatten(2).transpose(1, 2)  # [B, H*W, C]
+        
+        # Add spatial positional embedding
+        x = x + self.pos_embed
         
         # Apply Self-Attention
         x = self.transformer(x)
@@ -57,7 +66,7 @@ class TransUNetDensity(nn.Module):
         
         # Vision Transformer Bottleneck
         # The feature map here will be 128 channels at 32x32 spatial resolution (1024 tokens)
-        self.vit = ViTBlock(embed_dim=128, num_heads=8, num_layers=4)
+        self.vit = ViTBlock(embed_dim=128, num_heads=8, num_layers=4, spatial_size=32)
 
         # Decoder
         self.u2 = ConvBlock(128+64, 64)
