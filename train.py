@@ -53,6 +53,8 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16, help="Batch size")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--save_dir", type=str, default="./weights", help="Directory to save model weights")
+    parser.add_argument("--resume", type=str, default="", help="Path to a .pth checkpoint to resume training from")
+    parser.add_argument("--start_epoch", type=int, default=1, help="Epoch number to resume from")
     args = parser.parse_args()
 
     img_dir = os.path.join(args.data_dir, "images")
@@ -76,6 +78,13 @@ def main():
     print("Using device:", device)
 
     model = TransUNetDensity().to(device)
+    
+    if args.resume and os.path.exists(args.resume):
+        print(f"Resuming training: loading weights from {args.resume}")
+        model.load_state_dict(torch.load(args.resume, map_location=device))
+    elif args.resume:
+        print(f"Warning: --resume path '{args.resume}' not found. Starting from scratch.")
+        
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
 
     THR = 0.28
@@ -85,7 +94,7 @@ def main():
     best_f1 = 0.0
 
     print("Starting training...")
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(args.start_epoch, args.epochs + 1):
         model.train()
         pbar = tqdm(train_loader, desc=f"Epoch {epoch}/{args.epochs}")
         loss_sum = 0.0
