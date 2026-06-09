@@ -7,23 +7,22 @@ from PIL import Image
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 # Import from the modular package
-from transunet_density import TransUNetDensity
-from manip_density_detect import preprocess_gray_128, density_to_boxes
+from manip_density_detect import UNetDensity, preprocess_gray_128, density_to_boxes
 _MODEL = None
-def load_transunet(model_path, device):
+def load_unet(model_path, device):
     global _MODEL
     if _MODEL is not None:
         return _MODEL
     
-    m = TransUNetDensity().to(device)
+    m = UNetDensity().to(device)
     sd = torch.load(model_path, map_location=device)
     m.load_state_dict(sd)
     m.eval()
     _MODEL = m
     return m
 @torch.no_grad()
-def detect_transunet(model_path, image_path, device, thr=0.28, min_area=20):
-    model = load_transunet(model_path, device)
+def detect_unet(model_path, image_path, device, thr=0.28, min_area=20):
+    model = load_unet(model_path, device)
     x, _ = preprocess_gray_128(image_path, img_size=128)
     x = x.to(device)
     pred_den, _ = model(x)
@@ -44,7 +43,7 @@ def get_all_images(folder_path):
         images.extend(glob.glob(os.path.join(folder_path, p), recursive=True))
     return images
 def main():
-    model_path = r"d:\Projects\GAtt-Medfakedet\weights\density_region_detector_transunet_best.pth"
+    model_path = r"D:\Projects\MedDetFake\models\density_region_detector_attention_best.pth"
     ct_dir = r"d:\Projects\CT_injection"
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -90,7 +89,7 @@ def main():
         cat = task["category"]
         
         try:
-            out = detect_transunet(model_path, img_path, device, thr=0.28, min_area=20)
+            out = detect_unet(model_path, img_path, device, thr=0.28, min_area=20)
             pred_fake = 1 if out["is_manipulated"] else 0
             
             y_true.append(label)
@@ -102,7 +101,7 @@ def main():
             print(f"Error processing {img_path}: {e}")
     # Compute overall metrics
     print("\n" + "="*40)
-    print("OVERALL METRICS (TransUNet - Real vs Fake)")
+    print("OVERALL METRICS (UNet - Real vs Fake)")
     print("="*40)
     acc = accuracy_score(y_true, y_pred)
     prec = precision_score(y_true, y_pred, zero_division=0)
