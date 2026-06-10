@@ -8,7 +8,8 @@ import numpy as np
 
 # Import custom modules
 from dataset import ManipDensityDataset, collate_keep_boxes
-from manip_density_detect import UNetDensity, density_to_boxes
+from manip_density_detect import density_to_boxes
+from transunet_density import TransUNetDensity
 
 def iou(a,b):
     x1=max(a[0],b[0]); y1=max(a[1],b[1])
@@ -21,11 +22,11 @@ def iou(a,b):
 def evaluate_test_split():
     split_json = r"d:\Projects\split_fixed_density.json"
     data_dir = r"d:\Projects\Dataset_deepfake_detection"
-    model_path = r"D:\Projects\MedDetFake\models\density_region_detector_attention_best.pth"
+    model_path = r"D:\Projects\GAtt-Medfakedet\weights\TransUnet_Epoch17.pth"
     
     # If the user saved it in args.save_dir, it might be in GAtt-Medfakedet directly
     if not os.path.exists(model_path):
-        model_path = r"D:\Projects\MedDetFake\models\density_region_detector_attention_best.pth"
+        model_path = r"D:\Projects\GAtt-Medfakedet\weights\TransUnet_Epoch17.pth"
 
     img_dir = os.path.join(data_dir, "images")
     den_dir = os.path.join(data_dir, "density")
@@ -43,9 +44,9 @@ def evaluate_test_split():
         
     print(f"Found {len(test_ids)} test images.")
 
-    print("Loading UNet model...")
+    print("Loading TransUNet model...")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = UNetDensity().to(device)
+    model = TransUNetDensity().to(device)
     if os.path.exists(model_path):
         model.load_state_dict(torch.load(model_path, map_location=device))
         print("Model loaded successfully.")
