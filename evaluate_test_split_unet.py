@@ -66,7 +66,7 @@ def evaluate_test_split_unet():
     ious = []
     abs_count_err = []
 
-    THR = 0.28
+    THR = 0.1
     MIN_AREA = 20
     IOU_THR = 0.5
 
